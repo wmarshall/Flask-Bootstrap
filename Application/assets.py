@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """ Define our asset bundles for front-end minification """
-from flask import redirect, request
+from os import path
+import subprocess as sp
 
+from flask import redirect, request
 from flask_webpack import Webpack
 
 
@@ -13,6 +15,8 @@ class MyWebpack(Webpack):
         return redirect(dev_server_url, code=301)
     if app.config["DEBUG"]:
       app.before_request(redirect_static)
+    if not path.exists(app.config["WEBPACK_MANIFEST_PATH"]):
+      sp.run(["/usr/bin/node", "node_modules/webpack/bin/webpack.js"], cwd="spinneret/app_src", check=True)
     super().init_app(app)
 
 webpack = MyWebpack()

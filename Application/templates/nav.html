@@ -10,10 +10,11 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="{{ url_for('main.dashboard') }}#/">Flask Bootstrap</a>
+      <a class="navbar-brand" href="{{ url_for('main.dashboard') }}#/">{{config.APP_NAME}}</a>
     </div>
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse navbar-ex1-collapse">
+      <ul class="nav navbar-nav navbar-dynamic"></ul>
       <ul class="nav navbar-nav navbar-right">
       {% if not (current_user and current_user.is_authenticated) %}
         <li><a href="{{ url_for('auth.login') }}">Login</a></li>

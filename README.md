@@ -8,8 +8,9 @@ An simple Flask app Template with:
 
 # First Time Setup
 
-
-./manage.py npm_update
+```
+pip install -r requirements.txt
+cd Application/app_src && npm install && node node_modules/webpack/bin/webpack.js
 ./manage.py db upgrade
 ./manage.py create_user
 ```
@@ -29,4 +30,24 @@ export APP_ENV="dev"
 ```
 ./manage.py db migrate
 ./manage.py db upgrade
+```
+
+## Production
+
+```
+export APP_ENV=prod
+export NODE_ENV=production
+```
+
+### Docker
+```
+docker build .
+docker run <hash>
+docker run <hash> celery_worker
+```
+
+### Bare metal
+```
+./manage.py run_uwsgi
+./manage.py celery_worker
 ```

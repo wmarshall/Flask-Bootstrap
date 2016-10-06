@@ -1,4 +1,5 @@
 // messages.scss
+@import "vendor";
 
 messages {
   position: absolute;
@@ -6,53 +7,81 @@ messages {
   right: 0px;
   max-width: 300px;
   z-index: 2000;
-}
 
-messages > .message-wrapper {
-  display: block;
-  clear: both;
-  float: right;
-  min-height: 50px;
-  min-width: 100px;
-  border-radius: 3px;
-  padding: 10px;
-  margin: 0px 10px 10px 0px;
-  box-shadow: 0px 0px 5px #aaa;
-  position:relative;
-  background: $message-color;
-}
+  > .message-wrapper {
+    @extend .alert;
+    @extend .alert-dismissable;
+    display: block;
+    clear: both;
+    float: right;
+    min-height: 50px;
+    min-width: 100px;
+    padding: 10px;
+    margin: 0px 10px 10px 0px;
+    box-shadow: 0px 0px 5px #aaa;
+    position: relative;
 
-messages > .message-wrapper:hover {
-  box-shadow: 0px 0px 7px #444;
-  background: $message-color-hover;
-}
+    > .close {
+      position: absolute;
+      top: 0px;
+      right: 0px;
+      margin: 3px;
+    }
 
-.message-wrapper > .message-category {
-  text-transform: capitalize;
-  display: block;
-  border-bottom: 1px solid;
-  font-weight: bold;
-}
+    > .message-category {
+      text-transform: capitalize;
+      display: block;
+      border-bottom: 1px solid;
+      font-weight: bold;
+    }
+  }
 
-.message-wrapper > .close {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  margin: 3px;
-}
+  > .message-wrapper:hover {
+    box-shadow: 0px 0px 7px #444;
+  }
 
-messages > .message-success {
-  background: $success-color;
-}
+  > .message-success {
+    @extend .alert-success;
+    > .message-header {
+      border-bottom-color: $alert-success-text;
+    }
+  }
 
-messages > .message-success:hover {
-  background: $success-color-hover;
-}
+  > .message-success:hover {
+    background: lighten($alert-success-bg, 2%);
+  }
 
-messages > .message-warning {
-  background: $warning-color;
-}
+  > .message-info {
+    @extend .alert-info;
+    > .message-header {
+      border-bottom-color: $alert-info-text;
+    }
+  }
 
-messages > .message-warning:hover{
-  background: $warning-color-hover;
+  > .message-info:hover {
+    background: lighten($alert-info-bg, 2%)
+  }
+
+  > .message-warning {
+    @extend .alert-warning;
+    > .message-header {
+      border-bottom-color: $alert-warning-text;
+    }
+  }
+
+  > .message-warning:hover{
+    background: lighten($alert-warning-bg, 2%);
+  }
+
+  > .message-danger {
+    @extend .alert-danger;
+    > .message-header {
+      border-bottom-color: $alert-danger-text;
+    }
+  }
+
+   > .message-danger:hover {
+    background: lighten($alert-danger-bg, 2%);
+  }
+
 }

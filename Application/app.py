@@ -8,7 +8,8 @@ from .database import db
 from .auth import login_manager
 from . import views
 from .auth import views as auth_views
-from .utils import make_json_response
+from .utils import make_json_response, JSONEncoder
+from .tasks import celery
 
 from .settings import ProdConfig
 
@@ -20,6 +21,7 @@ def create_app(config_object=ProdConfig):
   """
   app = Flask(__name__)
   app.config.from_object(config_object)
+  app.json_encoder = JSONEncoder
   register_extensions(app)
   register_blueprints(app)
   register_errorhandlers(app)
@@ -36,6 +38,7 @@ def register_extensions(app):
   webpack.init_app(app)
   db.init_app(app)
   login_manager.init_app(app)
+  celery.init_app(app)
 
 def register_admin_interface(app):
   """

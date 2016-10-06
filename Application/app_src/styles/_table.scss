@@ -1,0 +1,39 @@
+@import "vendor";
+
+@media print {
+  table.table {
+    tr {
+      &.success {
+        color: $brand-success !important;
+      }
+      &.primary {
+        color: $brand-primary !important;
+      }
+      &.info {
+        color: $brand-info !important;
+      }
+      &.warning {
+        color: $brand-warning !important;
+      }
+      &.danger {
+        color: $brand-danger !important;
+      }
+      *, *:before, *:after {
+        color: inherit !important;
+      }
+    }
+  }
+}
+@media screen {
+  table.table {
+    tr {
+      &.success,
+      &.primary,
+      &.info,
+      &.warning,
+      &.danger {
+        color: inherit;
+      }
+    }
+  }
+}

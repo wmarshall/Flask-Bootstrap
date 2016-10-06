@@ -97,10 +97,10 @@ def create_user():
       abort(400)
   return render_template('auth/user-add.html', form=form)
 
-@blueprint.route("/users/<int:user_id>", methods=['GET', 'POST'])
+@blueprint.route("/users/<username>", methods=['GET', 'POST'])
 @role_required('orgadmin')
-def edit_user(user_id):
-  user = User.query.filter_by(id=user_id).one()
+def edit_user(username):
+  user = User.query.filter_by(id=username).one()
   form = EditUserForm(request.form, user)
   if form.is_submitted():
     if form.validate():

@@ -4,13 +4,38 @@ var webpack = require("webpack");
 var ManifestRevisionPlugin = require('manifest-revision-webpack-plugin');
 
 var rootAssetPath = "./";
-var file_loader = "file?context=" + rootAssetPath + "&name=[path][name].[hash].[ext]";
+var fileLoader = "file?context=" + rootAssetPath + "&name=[path][name].[hash].[ext]";
+
+var plugins = [
+    new ManifestRevisionPlugin(path.join(rootAssetPath, "manifest.json"), {
+      rootAssetPath: rootAssetPath,
+      ignorePaths: ["node_modules", "webpack.config.js", "manifest.json", "package.json", ".babelrc"],
+    }),
+    new webpack.ProvidePlugin({
+      $: "jquery",
+      jQuery: "jquery"
+    }),
+];
+
+var entry = {
+  "app_js": ["babel-polyfill", "./lib/app.js"],
+  "app_style": ["./styles/styles.scss"],
+};
+
+var sassToCssLoader = ["css?sourceMap", "resolve-url", "sass?sourceMap"];
+var cssToFinalLoader = ["style"];
+
+if(process.env.NODE_ENV === 'production'){
+  plugins = plugins.concat([
+    new webpack.optimize.OccurrenceOrderPlugin(),
+    new webpack.optimize.UglifyJsPlugin(),
+  ]);
+  cssToFinalLoader = ["file?context=" + rootAssetPath + "&name=[path][name].css", "extract"];
+}else{
+}
 
 module.exports = {
-  entry: {
-    "app_js": ["babel-polyfill", "./lib/app.js"],
-    "app_style": ["./styles/styles.scss"],
-  } ,
+  entry: entry ,
   output: {
     path: "../static",
     publicPath:"/static/",
@@ -18,20 +43,15 @@ module.exports = {
     chunkFilename: "[id].[chunkhash].js"
   },
   resolve: {
-    extensions: ["", ".js", ".css"]
+    extensions: ["", ".vue", ".js", ".css"]
   },
-  devtool: "source-map",
+  devtool: "eval-source-map",
   module: {
     loaders: [
       //Sass
       {
         test: /\.s(c|a)ss$/,
-        // TODO: MAKE WORK IN PRODUCTION
-        // loader: multi(
-        //               ["file?context=" + rootAssetPath + "&name=[path][name].[hash].css", "extract", "css?sourceMap", "resolve-url", "sass?sourceMap"].join("!"),
-        //               ["style", "css", "resolve-url?fail", "sass?sourceMap"].join("!")
-        //               )
-        loaders: ["style", "css?sourceMap", "resolve-url", "sass?sourceMap"]
+        loaders: cssToFinalLoader.concat(sassToCssLoader),
       },
       //JS (ES6)
       {
@@ -42,18 +62,19 @@ module.exports = {
       //Fonts
       {
         test : /\.(ttf|svg|eot|woff|woff2)$/,
-        loaders: [file_loader]
+        loaders: [fileLoader]
+      },
+      //Vue Components
+      {
+        test: /\.vue$/,
+        loaders: ["vue"]
       }
     ]
   },
-  plugins:[
-    new ManifestRevisionPlugin(path.join(rootAssetPath, "manifest.json"), {
-      rootAssetPath: rootAssetPath,
-      ignorePaths: ["node_modules", "webpack.config.js", "manifest.json", "package.json", ".babelrc", "styles"],
-    }),
-    new webpack.ProvidePlugin({
-      $: "jquery",
-      jQuery: "jquery"
-    })
-  ]
+  vue: {
+    loaders: {
+      sass: "vue-style!" + sassToCssLoader.join("!"),
+    }
+  },
+  plugins:plugins,
 };

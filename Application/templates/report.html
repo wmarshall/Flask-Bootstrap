@@ -1,0 +1,309 @@
+{% extends "layout.html" %}
+
+{% block report_title %}{{report.name}}{% if base_report is not none %}(based on {{base_report.name}}){% endif %}{% endblock %}
+
+{% block page_title %}{{super()}}:{{self.report_title()}}{% endblock %}
+
+{% block nav %}{% endblock %}{# strip navbar for clarity #}
+
+{% block content %}
+{% with domain_counts = new_results["domains"],
+        subnet_counts = new_results["subnets"],
+        system_counts = new_results["asns"],
+        org_counts = new_results["orgs"],
+        peers = new_results["peers"],
+        tlds = new_results["tlds"] %}
+  <h1>Spinneret: {{self.report_title()}}</h1>
+  <h2>Overview</h2>
+  <p>
+  This report, started at {{report.started_at_time}}, analyzed the
+  {%- for section in report.sections.split() %}
+    {%- if not loop.first %}, {% if loop.last and loop.index > 2 %}and {% endif %}{% endif %}
+    {%- if section == 'orgs' %} Organizations
+    {%- elif section == 'asns' %} Autonomous Systems
+    {%- elif section == 'subnets' %} Subnets
+    {%- elif section == 'domains' %} Domains
+    {%- endif -%}
+  {% endfor %}
+  associated with Domains
+  {% if report.filterstring %}
+    matching the patterns {{report.filterstring}}
+  {% endif -%}
+  in the known internet.
+  </p>
+
+  <p>
+  {% if base_report is not none %}
+  This report is based on {{base_report.name}}, started {{base_report.started_at_time}}.
+  Changes shown in the tables below are calculated relative to that report.
+  {% endif %}
+  </p>
+
+  <p>
+  The domains analyzed were in the
+  {%- for tld in tlds|sort %}
+    {%- if not loop.first %}, {% if loop.last and loop.index > 2 %}and {% endif %}{% endif %}
+    .{{tld}}
+  {%- endfor %}
+  TLD{{'s' if tlds|count > 1}}.
+  </p>
+
+  {% if "orgs" in report.sections %}
+  <h2>Organizations</h2>
+    {% if not org_counts %}
+    <p>No organizations were included in the results</p>
+    {% else %}
+    <p>
+
+
+    The {{org_counts|count}} organizations in the network routed a median of
+    {{median_grouped(list(zip(*org_counts))[1])|round(2)}} domains (50th percentile),
+    with a standard deviation of {{pstdev(list(zip(*org_counts))[1])|round(2)}} domains.
+    The densest {{report.results_per_section}} Organizations are presented in order from most to least domains below.
+
+    </p>
+    <h3>Densest Organizations</h3>
+    <table class="table table-striped table-bordered">
+      <thead>
+        <th>Rank</th>
+        <th>Organization Name</th>
+        <th># of Domains Routed</th>
+      </thead>
+      <tbody>
+        {% with old_results = old_results["orgs"] or {} %}
+          {% for name, domaincount in org_counts|batch(report.results_per_section)|first -%}
+            {% with old_rank, old_count =  old_results[name] or (loop.index, domaincount) %}
+              {% if old_rank > loop.index %}
+                <tr class="success">
+              {% elif old_rank < loop.index %}
+                <tr class="danger">
+              {% else %}
+                <tr>
+              {% endif %}
+                  <th scope="row">
+                    {% if old_rank < loop.index %}
+                      <i class="fa fa-fw fa-chevron-down"></i>{{loop.index}} ({{old_rank}})
+                    {% elif old_rank > loop.index %}
+                      <i class="fa fa-fw fa-chevron-up"></i>{{loop.index}} ({{old_rank}})
+                    {% else %}
+                      <i class="fa fa-fw fa-minus"></i>{{loop.index}}
+                    {% endif %}
+                  </th>
+                  <td>{{name}}</td>
+                  <td>{{domaincount}} ({{old_count}})</td>
+                </tr>
+            {% endwith %}
+          {% endfor %}
+        {% endwith %}
+      </tbody>
+    </table>
+    {% endif %}
+  {% endif %}
+
+  {% if "asns" in report.sections %}
+  <h2>Autonomous Systems</h2>
+    {% if not systems_count %}
+    <p>No Autonomous Systems were included in the results</p>
+    {% else %}
+    <p>
+    The network contained {{system_counts|count}} Autonomous Systems routing domains. They routed a
+    median of {{median_grouped(list(zip(*system_counts))[1])|round(2)}} domains (50th percentile),
+    with a standard deviation of {{pstdev(list(zip(*system_counts))[1])|round(2)}} domains.
+    The densest {{report.results_per_section}} Autonomous Systems are presented in order from most to least domains below.
+    </p>
+    <h3>Densest ASNs</h3>
+    <table class="table table-striped table-bordered">
+      <thead>
+        <th>Rank</th>
+        <th>Organization Name</th>
+        <th>AS Name</th>
+        <th>AS Number</th>
+        <th>Biggest Peers</th>
+        <th># of Domains Routed</th>
+      </thead>
+      <tbody>
+        {% with old_results = old_results["asns"] or {} %}
+          {% for asnumber, domaincount, asname, orgname in system_counts|batch(report.results_per_section)|first -%}
+            {% with old_rank, old_count = old_results[asnumber] or (loop.index, peer_score) %}
+              {% if old_rank < loop.index %}
+                <tr class="success">
+              {% elif old_rank > loop.index %}
+                <tr class="danger">
+              {% else %}
+                <tr>
+              {% endif %}
+                <th scope="row">
+                  {% if old_rank < loop.index %}
+                    <i class="fa fa-fw fa-chevron-down"></i>{{loop.index}} ({{old_rank}})
+                  {% elif old_rank > loop.index %}
+                    <i class="fa fa-fw fa-chevron-up"></i>{{loop.index}} ({{old_rank}})
+                  {% else %}
+                    <i class="fa fa-fw fa-minus"></i>{{loop.index}}
+                  {% endif %}
+                </th>
+                <td>{{orgname}}</td>
+                <td>{{asname}}</td>
+                <td>AS{{asnumber}}</td>
+                <td>AS{{peers[asnumber][:3]|join(", AS")}}</td>
+                <td>{{domaincount}} ({{old_count}})</td>
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        {% endwith %}
+      </tbody>
+    </table>
+    {% endif %}
+  {% endif %}
+
+
+  {% if "peers" in report.sections %}
+  <p>
+  The peering arrangements of the Autonomous Systems are indicated by the routing table.
+  Analysis of these routes yields a ranking of the Autonomous Systems in terms of their importance as a peer.
+  The top {{report.results_per_section}} Autonomous Systems by this metric are presented in order below.
+  </p>
+  <h3>Peer Rank</h3>
+  <table class="table table-striped table-bordered">
+    <thead>
+      <th>Rank</th>
+      <th>Organization Name</th>
+      <th>AS Name</th>
+      <th>AS Number</th>
+      <th>Biggest Peers</th>
+      <th>Peer Score(higher is better)</th>
+    </thead>
+    <tbody>
+      {% with old_results = old_results["peer_scores"] or {} %}
+        {% for asnumber, score in peer_scores|batch(report.results_per_section)|first -%}
+          {% with old_rank, old_score = old_results[asnumber] or (loop.index, score) %}
+            {% if old_rank < loop.index %}
+              <tr class="success">
+            {% elif old_rank > loop.index %}
+              <tr class="danger">
+            {% else %}
+              <tr>
+            {% endif %}
+              <th scope="row">
+                {% if old_rank < loop.index %}
+                  <i class="fa fa-fw fa-chevron-down"></i>{{loop.index}} ({{old_rank}})
+                {% elif old_rank > loop.index %}
+                  <i class="fa fa-fw fa-chevron-up"></i>{{loop.index}} ({{old_rank}})
+                {% else %}
+                  <i class="fa fa-fw fa-minus"></i>{{loop.index}}
+                {% endif %}
+              </th>
+              {% with orgname, asname = asn_names_map[asnumber] or (none, none) %}
+                <td>{{orgname}}</td>
+                <td>{{asname}}</td>
+              {% endwith %}
+              <td>AS{{asnumber}}</td>
+              <td>AS{{peers[asnumber][:3]|join(", AS")}}</td>
+              <td>{{score|round(2)}}
+              ({{old_score|round(2)}})</td>
+            </tr>
+          {% endwith %}
+        {% endfor %}
+      {% endwith %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if "subnets" in report.sections %}
+    <h2>Subnets</h2>
+    {% if not systems_count %}
+    <p>No Autonomous Systems were included in the results</p>
+    {% else %}
+    <p>
+    The {{subnet_counts|count}} subnets analyzed contained a median of
+    {{median_grouped(list(zip(*subnet_counts))[1])|round(2)}} domains (50th percentile), with a
+    standard deviation of {{pstdev(list(zip(*subnet_counts))[1])|round(2)}}. The {{report.results_per_section}} densest
+    subnets are presented in order from most to least domains below.
+    </p>
+    <h3>Densest Subnets</h3>
+    <table class="table table-striped table-bordered">
+      <thead>
+        <th>Rank</th>
+        <th>CIDR Address</th>
+        <th># of domains in subnet</th>
+      </thead>
+      <tbody>
+        {% with old_results = old_results["subnets"] or {} %}
+          {% for subnet, domaincount in subnet_counts|batch(report.results_per_section)|first -%}
+            {% with old_rank, old_count = old_results[subnet] or (loop.index, domaincount) %}
+            {% if old_rank < loop.index %}
+              <tr class="success">
+            {% elif old_rank > loop.index %}
+              <tr class="danger">
+            {% else %}
+              <tr>
+            {% endif %}
+                <th scope="row">
+                  {% if old_rank < loop.index %}
+                    <i class="fa fa-fw fa-chevron-down"></i>{{loop.index}} ({{old_rank}})
+                  {% elif old_rank > loop.index %}
+                    <i class="fa fa-fw fa-chevron-up"></i>{{loop.index}} ({{old_rank}})
+                  {% else %}
+                    <i class="fa fa-fw fa-minus"></i>{{loop.index}}
+                  {% endif %}
+                </th>
+                <td>{{subnet}}</td>
+                <td>{{domaincount}} ({{old_count}})</td>
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        {% endwith %}
+      </tbody>
+    </table>
+    {% endif %}
+  {% endif %}
+
+  {% if "domains" in report.sections %}
+  <h2>Domains</h2>
+    {% if not domain_counts %}
+    <p>No Domains were included in the results</p>
+    {% else %}
+    <p>
+    The {{domain_counts|count}} domains analyzed were assigned a median of
+    {{median_grouped(list(zip(*domain_counts))[1])|round(2)}} addresses (50th percentile), with
+    a standard deviation of {{pstdev(list(zip(*domain_counts))[1])|round(2)}} addresses. The
+    {{report.results_per_section}} heaviest domains are presented in order from most to least addresses below.
+    </p>
+    <h3>Heaviest Domains</h3>
+    <table class="table table-striped table-bordered">
+      <thead>
+        <th>Rank</th>
+        <th>Domain</th>
+        <th># of addresses</th>
+      </thead>
+      <tbody>
+        {% with old_results = old_results["domains"] or {} %}
+          {% for domain, count in domain_counts|batch(report.results_per_section)|first -%}
+            {% with old_rank, old_count = old_results[domain] or (loop.index, domaincount) %}
+            {% if old_rank < loop.index %}
+              <tr class="success">
+            {% elif old_rank > loop.index %}
+              <tr class="danger">
+            {% else %}
+              <tr>
+            {% endif %}
+               <th scope="row">
+                  {% if old_rank < loop.index %}
+                    <i class="fa fa-fw fa-chevron-down"></i>{{loop.index}} ({{old_rank}})
+                  {% elif old_rank > loop.index %}
+                    <i class="fa fa-fw fa-chevron-up"></i>{{loop.index}} ({{old_rank}})
+                  {% else %}
+                    <i class="fa fa-fw fa-minus"></i>{{loop.index}}
+                  {% endif %}
+                </th>
+                <td>{{domain}}</td>
+                <td>{{count}} ({{old_count}})</td>
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        {% endwith %}
+      </tbody>
+    </table>
+  {% endif %}
+  {% endif %}
+{% endwith %}
+{% endblock %}

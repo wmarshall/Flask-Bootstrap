@@ -37,8 +37,8 @@ class User(UserMixin, Model):
   __tablename__ = 'users'
 
   username = Column(db.String(80), primary_key=True)
-  password = Column(db.String(128), nullable=True)
-  salt = Column(db.String(128), nullable=True)
+  password = Column(db.LargeBinary(256), nullable=True)
+  salt = Column(db.LargeBinary(256), nullable=True)
   full_name = Column(db.String(80), nullable=True)
   active = Column(db.Boolean(), default=False)
   is_admin = Column(db.Boolean(), default=False)

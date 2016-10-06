@@ -15,7 +15,7 @@
     <tbody>
       {% for user in users %}
       <tr>
-        <th><a href="{{ url_for('auth.edit_user', user_id=user.id) }}">{{ user.username }}</a></th>
+        <th><a href="{{ url_for('auth.edit_user', username=user.username) }}">{{ user.username }}</a></th>
         <td>{{ user.full_name }}</td>
         <td>
           {% if user.has_role("orgadmin") %}
