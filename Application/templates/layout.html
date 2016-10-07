@@ -16,7 +16,9 @@
 
 
   {% block css %}
+    {% if config['ENV'] != 'dev' %}
     <link rel="stylesheet" type="text/css" href="/static/styles/styles.css">
+    {% endif %}
   {% endblock %}
 
 </head>
