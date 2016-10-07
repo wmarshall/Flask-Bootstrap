@@ -10,7 +10,7 @@ messages {
 
   > .message-wrapper {
     @extend .alert;
-    @extend .alert-dismissable;
+    // @extend .alert-dismissable;
     display: block;
     clear: both;
     float: right;
@@ -26,6 +26,7 @@ messages {
       top: 0px;
       right: 0px;
       margin: 3px;
+      color: inherit;
     }
 
     > .message-category {
